@@ -1,0 +1,12 @@
+[project]
+name = "ai-news-aggregator"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "feedparser>=6.0.12",
+    "youtube-transcript-api>=1.2.4",
+    "pydantic>=2.0.0",
+    "docling>=2.84.0",
+]
