@@ -1,4 +1,4 @@
-from app.services.runner import run_all
+from app.runner import run_all
 
 def main():
     run_all()

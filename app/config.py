@@ -7,4 +7,4 @@ YOUTUBE_CHANNELS = [
 ]
 
 # Default time window for news aggregation
-MAX_AGE_HOURS = 24
+MAX_AGE_HOURS = 240
