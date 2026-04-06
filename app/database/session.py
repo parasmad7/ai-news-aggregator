@@ -5,8 +5,8 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
 # Search for .env files in multiple locations
-project_base = Path(__file__).resolve().parent.parent.parent
-load_dotenv(project_base / ".env")
+app_env = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(app_env)
 
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/ai_news_aggregator")
 

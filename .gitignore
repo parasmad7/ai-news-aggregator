@@ -38,4 +38,6 @@ uv.lock
 
 # Project specific
 .python-version
-ai-news-aggregator.code-workspace
+# Environment files
+.env
+app/.env

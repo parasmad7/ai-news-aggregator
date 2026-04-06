@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy import Column, Integer, String, DateTime, Text, Float
+from datetime import datetime
 from .session import Base
 
 class VideoModel(Base):
@@ -23,3 +24,24 @@ class PostModel(Base):
     category = Column(String, nullable=True)
     source = Column(String, nullable=False) # OpenAI, Anthropic
     content = Column(Text, nullable=True)
+
+class DigestModel(Base):
+    __tablename__ = "digests"
+
+    id = Column(Integer, primary_key=True, index=True)
+    source_url = Column(String, unique=True, index=True, nullable=False)
+    title = Column(String, nullable=False)
+    summary = Column(Text, nullable=False)
+    source_type = Column(String, nullable=False) # 'video' or 'post'
+    created_at = Column(DateTime, nullable=False)
+    relevance_score = Column(Float, nullable=True)
+    relevance_reason = Column(Text, nullable=True)
+
+class EmailModel(Base):
+    __tablename__ = "emails"
+
+    id = Column(Integer, primary_key=True, index=True)
+    subject = Column(String, nullable=False)
+    body = Column(Text, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    sent_at = Column(DateTime, nullable=True)
