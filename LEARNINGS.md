@@ -1,26 +1,37 @@
 # Project Learnings & Insights
 
-This document captures key technical decisions, architectural shifts, and daily learnings from the development of the AI News Aggregator.
+This document captures key technical decisions, architectural shifts, and daily progress from the development of the AI News Aggregator.
 
-## 🚀 Technical Milestones
+---
 
-### 2026-04-06: Migration to Vertex AI (Gemini 2.5 Flash)
-- **Decision:** Shifted from the standalone Gemini API to **Vertex AI** via Google Cloud.
-- **Why:** Vertex AI offers better enterprise reliability, easier project management on Google Cloud, and access to the latest frontier models like **Gemini 2.5 Flash**.
-- **SDK Choice:** Leveraged the unified `google-genai` SDK. Even though the legacy `vertexai` library exists, the modern GenAI SDK is now the recommended path for both Gemini API and Vertex AI, providing a consistent interface for multimodal inputs and structured outputs.
-- **Authentication Shift:** Moved away from static `GOOGLE_API_KEY` in favor of **Application Default Credentials (ADC)**. Running `gcloud auth application-default login` creates a more secure, local-agent-based environment.
+### 2026-04-06
 
-### 2026-04-04: Deep Content Extraction with Docling
-- **Decision:** Integrated IBM's `docling` for blog post extraction.
-- **Insight:** Traditional HTML-to-Markdown libraries often fail on complex JS-heavy blogs. `docling` provides much more robust structured output, which significantly improves the quality of LLM-generated summaries.
+**What We Did**
+- **Hardware Audit:** Assessed M1 Mac (8GB RAM) capabilities for running local LLMs (Gemma 4 E2B vs Qwen 3.5 0.8B).
+- **Vertex AI Migration:** Refactored the entire agentic pipeline (`SummarizerAgent`, `CuratorAgent`, `EmailAgent`) from the standard Gemini API to Google Cloud's **Vertex AI**.
+- **Security & Auth:** Removed `GOOGLE_API_KEY` dependencies and implemented **Application Default Credentials (ADC)** via `gcloud`.
+- **Model Upgrade:** Standardized on **Gemini 2.5 Flash** for all summarization and ranking tasks.
+- **Documentation:** Updated `README.md` and created this learning log.
 
-## 🧠 Architectural Insights
+**Key Learnings**
+- **Unified SDK:** The `google-genai` SDK v0.3.0+ is a "one-stop-shop" for both the developer API and Vertex AI. Switching between them is as simple as toggling a `vertexai=True` flag and providing project/location details.
+- **Project IDs vs. Names:** In Vertex AI, the `project` argument in `vertexai.init()` or `genai.Client()` MUST be the **Project ID** (e.g., `playground-9192`), not the friendly Project Name (e.g., "Playground").
+- **ADC over API Keys:** Static API keys are easier to start with, but ADC is more robust for local development as it ties directly to your `gcloud` identity and avoids "leaking" keys in environment files.
 
-### Multi-Agent vs. Single-Pipeline
-The project uses a dedicated agentic structure (`SummarizerAgent`, `CuratorAgent`, `EmailAgent`):
-- **Isolation:** Each agent has a single responsibility (summarization, ranking, or email tailoring).
-- **Structured Output:** Using Pydantic schemas with `response_mime_type="application/json"` is critical for reliability. It virtually eliminates "hallucinated JSON" or parsing errors that common prompting techniques often suffer from.
+**Insights**
+- **Model Scale vs. Task Complexity:** While a 0.8B model (Qwen 3.5) is perfect for local inference, tasks requiring complex HTML/CSS generation (like our Email Agent) or precise relevance ranking benefit significantly from the reasoning capabilities of a frontier model like Gemini 2.5 Flash.
+- **Structured Output Reliability:** Pydantic integration in the GenAI SDK (via `response_mime_type="application/json"`) is the project's "secret sauce." It ensures that downstream services can always parse agent results without needing complex regex or manual string cleaning.
 
-### Local vs. Cloud LLMs
-- **Experiment:** Briefly explored using **Qwen 3.5 0.8B** via Ollama for a purely local setup.
-- **Learning:** While 0.8B models are incredibly fast on M1 Mac Silicon, frontier models like Gemini 2.5 Flash on Vertex AI provide significantly better reasoning for curation tasks and HTML styling for emails.
+---
+
+### 2026-04-04
+
+**What We Did**
+- **Content Extraction:** Integrated IBM's `docling` to handle blog-to-markdown conversion for OpenAI and Anthropic posts.
+- **Database Refinement:** Truncated stale records and rebuilt the `posts` table with full markdown content.
+
+**Key Learnings**
+- **Docling Superiority:** For JS-heavy or complex AI research blogs (like Anthropic's), standard scrapers often return empty or messy text. `docling` handles these as first-class citizens, providing high-quality input for the LLM.
+
+**Insights**
+- **Garbage In, Garbage Out:** The quality of an AI summary is 90% dependent on the quality of the raw text extraction. Investing in a robust extraction layer like `docling` is a prerequisite for a reliable news aggregator.
