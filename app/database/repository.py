@@ -64,18 +64,19 @@ class NewsRepository:
         """Fetches a digest by its source URL."""
         return self.db.query(DigestModel).filter(DigestModel.source_url == url).first()
 
-    def create_digest(self, url: str, title: str, summary: str, source_type: str):
-        """Creates a new digest entry."""
-        db_digest = DigestModel(
+    def create_digest(self, url: str, title: str, summary: str, source_type: str, published_at: datetime) -> DigestModel:
+        """Creates a digest for a video or post."""
+        digest = DigestModel(
             source_url=url,
             title=title,
             summary=summary,
             source_type=source_type,
-            created_at=datetime.utcnow()
+            published_at=published_at
         )
-        self.db.add(db_digest)
+        self.db.add(digest)
         self.db.commit()
-        return db_digest
+        self.db.refresh(digest)
+        return digest
 
     def get_unranked_digests(self):
         """Fetches all digests that haven't been ranked yet."""

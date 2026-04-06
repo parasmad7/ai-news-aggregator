@@ -20,17 +20,23 @@ class DigestSummary(BaseModel):
     summary: str = Field(description="A 2-3 line summary of the content.")
 
 class SummarizerAgent:
-    def __init__(self, model_name="gemini-3-flash-preview"):
+    def __init__(self, model_name=None):
         self.db = SessionLocal()
         self.repo = NewsRepository(self.db)
         
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in .env file.")
+        project_id = os.getenv("VERTEX_PROJECT_ID")
+        location = os.getenv("VERTEX_LOCATION")
         
-        # Initialize the new Google GenAI client
-        self.client = genai.Client(api_key=api_key)
-        self.model_name = model_name
+        if not project_id or not location:
+            raise ValueError("Vertex AI configuration (PROJECT_ID/LOCATION) not found in .env file.")
+        
+        # Initialize the new Google GenAI client for Vertex AI
+        self.client = genai.Client(
+            vertexai=True,
+            project=project_id,
+            location=location
+        )
+        self.model_name = model_name or os.getenv("VERTEX_MODEL", "gemini-2.5-flash")
 
     def summarize(self, text: str, title: str) -> str:
         """Sends content to Gemini and returns a 2-3 line summary using structured output."""
@@ -76,7 +82,13 @@ class SummarizerAgent:
             print(f"  -> Summarizing video: {video.title}")
             summary = self.summarize(content, video.title)
             if summary:
-                self.repo.create_digest(video.url, video.title, summary, "video")
+                self.repo.create_digest(
+                    url=video.url,
+                    title=video.title,
+                    summary=summary,
+                    source_type="video",
+                    published_at=video.published_at
+                )
                 print(f"     [STRECH] Summary saved")
         
         # Process Posts
@@ -90,7 +102,13 @@ class SummarizerAgent:
             print(f"  -> Summarizing post: {post.title}")
             summary = self.summarize(content, post.title)
             if summary:
-                self.repo.create_digest(post.url, post.title, summary, "post")
+                self.repo.create_digest(
+                    url=post.url,
+                    title=post.title,
+                    summary=summary,
+                    source_type="post",
+                    published_at=post.published_at
+                )
                 print(f"     [STRECH] Summary saved")
         
         print("Summarization complete.")
@@ -99,9 +117,8 @@ class SummarizerAgent:
         self.db.close()
 
 if __name__ == "__main__":
-    # The user specifically requested Gemini 3 Flash.
-    model_to_use = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
-    agent = SummarizerAgent(model_name=model_to_use)
+    # Use Vertex AI configuration
+    agent = SummarizerAgent()
     try:
         agent.run()
     finally:

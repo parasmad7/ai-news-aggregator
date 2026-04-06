@@ -21,21 +21,31 @@ class EmailContent(BaseModel):
     body: str = Field(description="The full email body in HTML with inline CSS, starting with 'Hey Paras'.")
 
 class EmailAgent:
-    def __init__(self, model_name="gemini-3-flash-preview"): # Updated to match other agents
+    def __init__(self, model_name=None): # Updated to match other agents
         self.db = SessionLocal()
         self.repo = NewsRepository(self.db)
         
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in .env file.")
+        project_id = os.getenv("VERTEX_PROJECT_ID")
+        location = os.getenv("VERTEX_LOCATION")
         
-        self.client = genai.Client(api_key=api_key)
-        self.model_name = model_name
+        if not project_id or not location:
+            raise ValueError("Vertex AI configuration (PROJECT_ID/LOCATION) not found in .env file.")
+        
+        # Initialize the new Google GenAI client for Vertex AI
+        self.client = genai.Client(
+            vertexai=True,
+            project=project_id,
+            location=location
+        )
+        self.model_name = model_name or os.getenv("VERTEX_MODEL", "gemini-2.5-flash")
 
     def generate_email(self, top_digests) -> EmailContent:
         """Generates a personalized HTML email digest using Gemini."""
         if not top_digests:
             return None
+
+        from datetime import datetime
+        today_str = datetime.now().strftime("%B %d, %Y")
 
         digest_items = ""
         for i, d in enumerate(top_digests):
@@ -46,6 +56,7 @@ class EmailAgent:
         prompt = f"""
         Generate a professional and beautifully styled HTML email digest for Paras.
         
+        Date: {today_str}
         Today's Top 10 News Items:
         <ul>
         {digest_items}
@@ -53,16 +64,17 @@ class EmailAgent:
         
         Requirements:
         1. The body MUST start with "Hey Paras" in an <h1> or <h2> tag.
-        2. Provide a brief, high-level summary of today's digest in the introduction.
-        3. Use semantic HTML and **inline CSS** for styling:
+        2. Incorporate the date ({today_str}) naturally into the introduction (e.g., "Here is your AI Digest for {today_str}").
+        3. Provide a brief, high-level summary of today's digest in the introduction.
+        4. Use semantic HTML and **inline CSS** for styling:
            - font-family: 'Inter', 'Helvetica', 'Arial', sans-serif;
            - color: #333;
            - line-height: 1.6;
            - max-width: 600px;
            - margin: 0 auto;
-        4. Links should be clearly styled and easy to click.
-        5. The overall look should feel premium, minimal, and modern.
-        6. The subject line should be catchy and relevant to the content.
+        5. Links should be clearly styled and easy to click.
+        6. The overall look should feel premium, minimal, and modern.
+        7. The subject line should be catchy and relevant to the content.
         """
         
         try:
@@ -120,9 +132,8 @@ class EmailAgent:
         self.db.close()
 
 if __name__ == "__main__":
-    # Check if a model is specified in the environment
-    model_to_use = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
-    agent = EmailAgent(model_name=model_to_use)
+    # Use Vertex AI configuration
+    agent = EmailAgent()
     try:
         agent.run()
     finally:

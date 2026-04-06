@@ -2,7 +2,7 @@
 # You can add more channel IDs here.
 
 YOUTUBE_CHANNELS = [
-    "UCsBjURrPoezykLs9EqgamOA"  # Example ID (Fireship)
+    "UCAlwrsgeJavG1vw9qSFOUmA"  # Example ID (AIM)
 ]
 
 # Default time window for news aggregation

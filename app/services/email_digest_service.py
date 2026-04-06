@@ -20,7 +20,7 @@ class EmailDigestService:
 
 if __name__ == "__main__":
     import os
-    model_to_use = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
+    model_to_use = os.getenv("VERTEX_MODEL", "gemini-2.5-flash")
     service = EmailDigestService(model_name=model_to_use)
     try:
         service.run()

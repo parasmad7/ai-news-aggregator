@@ -21,16 +21,23 @@ class RankingResponse(BaseModel):
     reason: str = Field(description="A brief explanation for the score")
 
 class CuratorAgent:
-    def __init__(self, model_name="gemini-3-flash-preview"):
+    def __init__(self, model_name=None):
         self.db = SessionLocal()
         self.repo = NewsRepository(self.db)
         
-        api_key = os.getenv("GOOGLE_API_KEY")
-        if not api_key:
-            raise ValueError("GOOGLE_API_KEY not found in .env file.")
+        project_id = os.getenv("VERTEX_PROJECT_ID")
+        location = os.getenv("VERTEX_LOCATION")
         
-        self.client = genai.Client(api_key=api_key)
-        self.model_name = model_name
+        if not project_id or not location:
+            raise ValueError("Vertex AI configuration (PROJECT_ID/LOCATION) not found in .env file.")
+        
+        # Initialize the new Google GenAI client for Vertex AI
+        self.client = genai.Client(
+            vertexai=True,
+            project=project_id,
+            location=location
+        )
+        self.model_name = model_name or os.getenv("VERTEX_MODEL", "gemini-2.5-flash")
 
     def rank_digest(self, title: str, summary: str) -> RankingResponse:
         """Scores a digest based on user interests using Gemini 3 Flash."""
@@ -80,9 +87,8 @@ class CuratorAgent:
         self.db.close()
 
 if __name__ == "__main__":
-    # The user specifically requested Gemini 3 Flash.
-    model_to_use = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
-    agent = CuratorAgent(model_name=model_to_use)
+    # Use Vertex AI configuration
+    agent = CuratorAgent()
     try:
         agent.run()
     finally:

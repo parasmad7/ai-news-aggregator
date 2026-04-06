@@ -33,7 +33,7 @@ class DigestModel(Base):
     title = Column(String, nullable=False)
     summary = Column(Text, nullable=False)
     source_type = Column(String, nullable=False) # 'video' or 'post'
-    created_at = Column(DateTime, nullable=False)
+    published_at = Column(DateTime, nullable=False)
     relevance_score = Column(Float, nullable=True)
     relevance_reason = Column(Text, nullable=True)
 
