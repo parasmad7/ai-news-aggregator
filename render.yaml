@@ -20,3 +20,9 @@ services:
         sync: false
       - key: APP_PASSWORD
         sync: false
+      - key: VERTEX_PROJECT_ID
+        sync: false
+      - key: VERTEX_LOCATION
+        sync: false
+      - key: GOOGLE_APPLICATION_CREDENTIALS
+        sync: false
