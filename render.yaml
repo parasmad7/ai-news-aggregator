@@ -1,0 +1,30 @@
+services:
+  - type: worker
+    name: ai-news-aggregator
+    env: python
+    pythonVersion: "3.11.0"
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "python daily_runner.py"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ai-news-db
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SENDER_EMAIL
+        sync: false
+      - key: SENDER_PASSWORD
+        sync: false
+      - key: RECIPIENT_EMAIL
+        sync: false
+
+databases:
+  - name: ai-news-db
+    databaseName: ai_news_aggregator
+    user: ai_news_user
+    plan: free

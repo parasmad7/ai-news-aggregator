@@ -3,6 +3,7 @@ import time
 import logging
 from datetime import datetime
 from app.runner import run_all
+from app.database.create_tables import init_db
 
 # Configure logging
 logging.basicConfig(
@@ -40,4 +41,7 @@ def run_scheduler():
         time.sleep(60) # Check every minute
 
 if __name__ == "__main__":
+    logging.info("Initializing database tables...")
+    init_db()
+    
     run_scheduler()
