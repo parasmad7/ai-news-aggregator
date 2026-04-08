@@ -276,8 +276,6 @@ safetensors==0.7.0
     #   accelerate
     #   docling-ibm-models
     #   transformers
-schedule==1.2.2
-    # via ai-news-aggregator (pyproject.toml)
 scipy==1.17.1
     # via docling
 semchunk==3.2.5
