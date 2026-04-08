@@ -10,10 +10,10 @@ load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 class EmailService:
     def __init__(self):
-        self.smtp_server = os.getenv("SMTP_SERVER")
-        self.smtp_port = os.getenv("SMTP_PORT")
-        self.sender_email = os.getenv("SENDER_EMAIL")
-        self.sender_password = os.getenv("SENDER_PASSWORD")
+        self.smtp_server = os.getenv("SMTP_SERVER", "smtp.gmail.com")
+        self.smtp_port = os.getenv("SMTP_PORT", "587")
+        self.sender_email = os.getenv("SENDER_EMAIL") or os.getenv("MY_EMAIL")
+        self.sender_password = os.getenv("SENDER_PASSWORD") or os.getenv("APP_PASSWORD")
         
         # Validation
         self.is_configured = all([

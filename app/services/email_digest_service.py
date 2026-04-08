@@ -45,7 +45,7 @@ class EmailDigestService:
             
             # 4. Send the email via the EmailService
             print("  -> Sending email...")
-            recipient = os.getenv("RECIPIENT_EMAIL", "paras@example.com")
+            recipient = os.getenv("RECIPIENT_EMAIL") or os.getenv("MY_EMAIL") or "paras@example.com"
             
             if self.email_service.send_email(email_data.subject, email_data.body, recipient):
                 # 5. Update the sent status in the DB
