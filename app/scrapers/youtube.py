@@ -71,11 +71,13 @@ class YouTubeScraper:
         return m.group(1) if m else None
 
     def get_transcript(self, video_id: str) -> Optional[str]:
+        """Fetches the transcript for a video, trying English first, then Hindi."""
         try:
-            segments = YouTubeTranscriptApi().fetch(video_id)
+            # Try English first, then Hindi
+            segments = YouTubeTranscriptApi().fetch(video_id, languages=['en', 'hi'])
             return " ".join([s.text.replace('\n', ' ') for s in segments])
         except Exception as e:
-            print(f"  -> Transcript failed: {e}")
+            print(f"  -> Transcript failed for {video_id}: {e}")
             return None
 
     def get_latest_videos(self, channel_id: str, max_age_hours: int = 24) -> ChannelVideos:

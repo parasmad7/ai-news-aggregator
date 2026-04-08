@@ -79,7 +79,7 @@ class CuratorAgent:
             ranking = self.rank_digest(d.title, d.summary)
             if ranking:
                 self.repo.update_digest_relevance(d.id, ranking.score, ranking.reason)
-                print(f"     [STRECH] Score: {ranking.score}")
+                print(f"     [STRETCH] Score: {ranking.score}")
         
         print("Curation complete.")
 

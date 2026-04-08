@@ -11,7 +11,7 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 from app.database.session import SessionLocal
 from app.database.repository import NewsRepository
-from app.services.email_service import EmailService
+# from app.services.email_service import EmailService (Moved to run() to avoid circular import)
 
 # Load environment variables
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
@@ -92,49 +92,18 @@ class EmailAgent:
             print(f"Error generating email: {e}")
             return None
 
-    def run(self):
-        """Fetches top digests, generates the email, saves it, and sends it."""
-        print("\n[Email Agent]")
-        
-        # 1. Fetch top 10 digests
-        print("Fetching top 10 ranked digests...")
-        top_digests = self.repo.get_top_digests(limit=10)
-        
-        if not top_digests:
-            print("  -> No ranked digests found. Email generation skipped.")
-            return
-
-        print(f"  -> Found {len(top_digests)} items. Generating email content...")
-        
-        # 2. Generate email content
-        email_data = self.generate_email(top_digests)
-        
-        if email_data:
-            # 3. Store in the database
-            db_email = self.repo.create_email(email_data.subject, email_data.body)
-            print(f"     [STRECH] Email template saved to 'emails' table (ID: {db_email.id})")
-            
-            # 4. Attempt to send the email
-            print("  -> Sending email...")
-            email_service = EmailService()
-            recipient = os.getenv("RECIPIENT_EMAIL", "paras@example.com") # Default if not in .env
-            
-            if email_service.send_email(email_data.subject, email_data.body, recipient):
-                # 5. Mark as sent in DB
-                self.repo.update_email_sent_status(db_email.id)
-                print(f"     [STRECH] Email successfully sent to {recipient}")
-            else:
-                print(f"     [WARNING] Email was stored but not sent. Check SMTP configuration.")
-        else:
-            print("  -> Failed to generate email content.")
-
     def close(self):
+        """Closes the database session."""
         self.db.close()
 
 if __name__ == "__main__":
-    # Use Vertex AI configuration
+    # Standard standalone check
+    from app.config import MAX_AGE_HOURS
     agent = EmailAgent()
     try:
-        agent.run()
+        top_digests = agent.repo.get_top_digests(limit=5, hours=MAX_AGE_HOURS)
+        content = agent.generate_email(top_digests)
+        if content:
+            print(f"--- Subject: {content.subject} ---\n{content.body[:200]}...")
     finally:
         agent.close()

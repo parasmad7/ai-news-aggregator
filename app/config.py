@@ -6,10 +6,11 @@ YOUTUBE_CHANNELS = [
 ]
 
 # Default time window for news aggregation
-MAX_AGE_HOURS = 72
+MAX_AGE_HOURS = 240
 
 # User interests for personalized ranking/curation
 USER_INTERESTS = [
+    "NASA",
     "Large Language Models",
     "AI Agents and Autonomy",
     "Open Source AI",

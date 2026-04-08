@@ -89,7 +89,7 @@ class SummarizerAgent:
                     source_type="video",
                     published_at=video.published_at
                 )
-                print(f"     [STRECH] Summary saved")
+                print(f"     [STRETCH] Summary saved")
         
         # Process Posts
         posts = self.repo.get_all_posts()
@@ -109,7 +109,7 @@ class SummarizerAgent:
                     source_type="post",
                     published_at=post.published_at
                 )
-                print(f"     [STRECH] Summary saved")
+                print(f"     [STRETCH] Summary saved")
         
         print("Summarization complete.")
 

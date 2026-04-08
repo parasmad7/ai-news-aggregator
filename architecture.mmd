@@ -1,0 +1,27 @@
+graph TD
+    A[Daily Runner / Schedule] --> B[app/runner.py]
+    B --> C[Scraper Service]
+    
+    subgraph "Scraping & Extraction"
+    C --> C1[YouTube Scraper]
+    C --> C2[OpenAI Scraper]
+    C --> C3[Anthropic Scraper]
+    C1 -.-> |Transcripts| D
+    C2 -.-> |Docling Markdown| D
+    C3 -.-> |Docling Markdown| D
+    end
+    
+    D[(PostgreSQL DB)]
+    
+    subgraph "Vertex AI Agent Layer"
+    E[Summarizer Agent] --> D
+    F[Curator Agent] --> D
+    G[Email Agent]
+    end
+    
+    D --> E
+    D --> F
+    F --> G
+    
+    G --> H[Email Delivery Service]
+    H --> I[User Inbox]

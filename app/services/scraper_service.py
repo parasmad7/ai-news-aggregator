@@ -32,7 +32,7 @@ class ScraperService:
                 for v in yt_data.videos:
                     print(f"  -> Video: {v.title} ({v.published_at})")
                     self.repo.add_video(v)
-                    print(f"     [STRECH] Saved to DB")
+                    print(f"     [STRETCH] Saved to DB")
 
     def run_openai(self):
         """Runs the OpenAI blog scraper."""
@@ -44,7 +44,7 @@ class ScraperService:
             for p in oa_posts:
                 print(f"  -> Blog: {p.title} ({p.published_at})")
                 self.repo.add_post(p, source="OpenAI")
-                print(f"     [STRECH] Saved to DB")
+                print(f"     [STRETCH] Saved to DB")
 
     def run_anthropic(self):
         """Runs the Anthropic blog scraper."""
@@ -56,7 +56,7 @@ class ScraperService:
             for p in ant_posts:
                 print(f"  -> [{p.category}] {p.title} ({p.published_at})")
                 self.repo.add_post(p, source="Anthropic")
-                print(f"     [STRECH] Saved to DB")
+                print(f"     [STRETCH] Saved to DB")
 
     def run_all(self):
         """Runs all scrapers in sequence."""

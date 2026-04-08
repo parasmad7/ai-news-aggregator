@@ -65,18 +65,22 @@ class NewsRepository:
         return self.db.query(DigestModel).filter(DigestModel.source_url == url).first()
 
     def create_digest(self, url: str, title: str, summary: str, source_type: str, published_at: datetime) -> DigestModel:
-        """Creates a digest for a video or post."""
-        digest = DigestModel(
-            source_url=url,
-            title=title,
-            summary=summary,
-            source_type=source_type,
-            published_at=published_at
-        )
-        self.db.add(digest)
-        self.db.commit()
-        self.db.refresh(digest)
-        return digest
+        """Creates a digest for a video or post if it doesn't already exist."""
+        db_digest = self.db.query(DigestModel).filter(DigestModel.source_url == url).first()
+        
+        if not db_digest:
+            db_digest = DigestModel(
+                source_url=url,
+                title=title,
+                summary=summary,
+                source_type=source_type,
+                published_at=published_at
+            )
+            self.db.add(db_digest)
+            self.db.commit()
+            self.db.refresh(db_digest)
+        
+        return db_digest
 
     def get_unranked_digests(self):
         """Fetches all digests that haven't been ranked yet."""
@@ -91,9 +95,16 @@ class NewsRepository:
             self.db.commit()
         return db_digest
 
-    def get_top_digests(self, limit: int = 10):
-        """Fetches the top N digests ranked by relevance score."""
-        return self.db.query(DigestModel).order_by(DigestModel.relevance_score.desc()).limit(limit).all()
+    def get_top_digests(self, limit: int = 10, hours: int = None):
+        """Fetches the top N digests ranked by relevance score, optionally filtered by the last N hours."""
+        query = self.db.query(DigestModel)
+        
+        if hours:
+            from datetime import timedelta
+            threshold = datetime.utcnow() - timedelta(hours=hours)
+            query = query.filter(DigestModel.published_at >= threshold)
+            
+        return query.order_by(DigestModel.relevance_score.desc()).limit(limit).all()
 
     def create_email(self, subject: str, body: str):
         """Stores a generated email template in the database."""
