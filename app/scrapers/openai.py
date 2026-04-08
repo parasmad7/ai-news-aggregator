@@ -8,7 +8,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 from typing import List, Optional
 from app.schemas.openai import OpenAIPost
-from docling.document_converter import DocumentConverter
+from html_to_markdown import convert
 
 class OpenAIScraper:
     def __init__(self):
@@ -17,14 +17,17 @@ class OpenAIScraper:
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         })
-        self.converter = DocumentConverter()
 
     def get_post_content(self, url: str) -> Optional[str]:
-        """Converts a given URL to Markdown using docling."""
+        """Converts a given URL to Markdown using html-to-markdown."""
         try:
             print(f"  -> Converting URL to Markdown: {url}")
-            result = self.converter.convert(url)
-            return result.document.export_to_markdown()
+            resp = self.session.get(url, timeout=10)
+            if resp.status_code != 200:
+                print(f"  -> Failed to fetch {url}: {resp.status_code}")
+                return None
+            result = convert(resp.text)
+            return result.get('content')
         except Exception as e:
             print(f"  -> Failed to convert {url}: {e}")
             return None
