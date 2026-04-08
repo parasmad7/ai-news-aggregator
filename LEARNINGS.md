@@ -4,6 +4,21 @@ This document captures key technical decisions, architectural shifts, and daily 
 
 ---
 
+### 2026-04-08
+
+**What We Did**
+- **Infrastructure Shift:** Replaced the Render-managed PostgreSQL database with a Neon Serverless Postgres DB by updating the `render.yaml` to accept a raw `DATABASE_URL` secret, unblocking Render free-tier friction.
+- **Dependency Optimization:** Removed IBM's heavy `docling` (and its nested dependencies) and deployed the lightweight `html-to-markdown` library. This dramatically slims down the environment size for cloud deployments.
+- **Graceful Scraper Fallbacks:** Maintained pipeline resilience against Cloudflare 403 Forbidden errors when scraping OpenAI from Render's datacenter IPs. The script successfully degrades to use RSS summaries instead of crashing.
+- **SMTP Configuration Fixes:** Mapped custom UI environment variables (`MY_EMAIL`, `APP_PASSWORD`) directly to the `EmailService`, automatically configured Google SMTP defaults, and established self-routing delivery if no recipient is defined.
+
+**Key Learnings**
+- **Datacenter IPs & Cloudflare:** Deploying scrapers to loud datacenters (like AWS, Render) almost guarantees hitting 403 blocks from Cloudflare-protected sites (like OpenAI). 
+- **Graceful Degradation:** A robust pipeline isn't one that never fails, it's one that handles failure cleanly. Because the scraper returned `None` instead of throwing an unhandled exception, our downstream AI summarizer effortlessly shifted to using the short RSS descriptions, ensuring the daily cron wasn't completely ruined by a single blocked request.
+- **Dependency Weight Matters:** While `docling` is incredibly powerful for complex PDF/JS-heavy processing locally, deploying its 2-3GB footprint just to convert basic blog HTML is overkill, causing Docker build headaches on cloud platforms.
+
+---
+
 ### 2026-04-06
 
 **What We Did**
