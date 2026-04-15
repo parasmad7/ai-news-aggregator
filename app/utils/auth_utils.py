@@ -45,6 +45,19 @@ def bootstrap_auth():
     except Exception as e:
         print(f"[Auth Utils] WARNING: Could not parse credentials file for diagnostics: {e}")
 
-def get_model_name(default="gemini-1.5-flash"):
+def list_available_models(client):
+    """Utility to list available Vertex AI models for diagnostics."""
+    try:
+        print("[Auth Utils] Fetching available models...")
+        models = client.models.list()
+        print("[Auth Utils] Available Models:")
+        for m in models:
+            print(f"  - {m.name}")
+    except Exception as e:
+        print(f"[Auth Utils] ERROR: Could not list models: {e}")
+
+def get_model_name(default="gemini-2.5-flash"):
     """Returns the model name from env or default."""
-    return os.getenv("VERTEX_MODEL") or default
+    model = os.getenv("VERTEX_MODEL") or default
+    print(f"[Auth Utils] Using model: {model}")
+    return model
