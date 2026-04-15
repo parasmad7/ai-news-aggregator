@@ -12,9 +12,10 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from app.database.session import SessionLocal
 from app.database.repository import NewsRepository
 # from app.services.email_service import EmailService (Moved to run() to avoid circular import)
+from app.utils import bootstrap_auth, get_model_name
 
-# Load environment variables
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# Bootstrap authentication and env vars
+bootstrap_auth()
 
 class EmailContent(BaseModel):
     subject: str = Field(description="A compelling subject line for the email digest.")
@@ -37,7 +38,7 @@ class EmailAgent:
             project=project_id,
             location=location
         )
-        self.model_name = model_name or os.getenv("VERTEX_MODEL", "gemini-2.5-flash")
+        self.model_name = model_name or get_model_name()
 
     def generate_email(self, top_digests) -> EmailContent:
         """Generates a personalized HTML email digest using Gemini."""

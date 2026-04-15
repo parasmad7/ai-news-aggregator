@@ -2,11 +2,10 @@ import os
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from dotenv import load_dotenv
-from pathlib import Path
+from app.utils import bootstrap_auth
 
-# Load environment variables
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# Bootstrap authentication and env vars
+bootstrap_auth()
 
 class EmailService:
     def __init__(self):

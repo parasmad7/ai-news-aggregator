@@ -4,6 +4,19 @@ This document captures key technical decisions, architectural shifts, and daily 
 
 ---
 
+### 2026-04-13
+
+**What We Did**
+- **Docker Architecture Review:** Deep-dived into the project's Docker strategy, distinguishing between local development (orchestrating PostgreSQL via `docker-compose`) and production deployment (building a self-contained application image via `Dockerfile` for Render cron jobs).
+- **Environment Parity Audit:** Analyzed the "gap" between host-machine development (Mac) and containerized production (Linux). Confirmed that while logic testing happens locally on the host, `uv.lock` is the critical bridge that ensures library-level parity across environments.
+
+**Key Learnings**
+- **Docker as a Utility vs. Packaging:** In modern local dev flows, we often treat Docker as a "utility provider" (spinning up complex services like DBs) while running the application code on the host for speed. In production, we shift to Docker as a "packaging tool" to guarantee environment consistency.
+- **The Role of the Lockfile:** A robust lockfile (`uv.lock`) is the true guarantor of "it works on my machine" translating to the cloud. It pins the entire dependency graph, neutralizing most OS-level library version shifts.
+- **Deployment vs. Orchestration:** Render uses the `Dockerfile` to build the *image*, but the `render.yaml` handles the *orchestration* (environment variables, schedules, and connectivity), effectively replacing the need for `docker-compose` in the cloud.
+
+---
+
 ### 2026-04-08
 
 **What We Did**

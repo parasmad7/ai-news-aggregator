@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text, Float
+from sqlalchemy import Column, Integer, String, DateTime, Text, Float, Boolean
 from datetime import datetime
 from .session import Base
 
@@ -36,6 +36,7 @@ class DigestModel(Base):
     published_at = Column(DateTime, nullable=False)
     relevance_score = Column(Float, nullable=True)
     relevance_reason = Column(Text, nullable=True)
+    is_sent = Column(Boolean, default=False)
 
 class EmailModel(Base):
     __tablename__ = "emails"

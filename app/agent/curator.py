@@ -12,9 +12,10 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 from app.database.session import SessionLocal
 from app.database.repository import NewsRepository
 from app.config import USER_INTERESTS
+from app.utils import bootstrap_auth, get_model_name
 
-# Load environment variables
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# Bootstrap authentication and env vars
+bootstrap_auth()
 
 class RankingResponse(BaseModel):
     score: float = Field(description="Relevance score from 0.0 to 1.0")
@@ -37,7 +38,7 @@ class CuratorAgent:
             project=project_id,
             location=location
         )
-        self.model_name = model_name or os.getenv("VERTEX_MODEL", "gemini-2.5-flash")
+        self.model_name = model_name or get_model_name()
 
     def rank_digest(self, title: str, summary: str) -> RankingResponse:
         """Scores a digest based on user interests using Gemini 3 Flash."""

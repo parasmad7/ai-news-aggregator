@@ -95,10 +95,13 @@ class NewsRepository:
             self.db.commit()
         return db_digest
 
-    def get_top_digests(self, limit: int = 10, hours: int = None):
+    def get_top_digests(self, limit: int = 10, hours: int = None, unsent_only: bool = True):
         """Fetches the top N digests ranked by relevance score, optionally filtered by the last N hours."""
         query = self.db.query(DigestModel)
         
+        if unsent_only:
+            query = query.filter(DigestModel.is_sent == False)
+
         if hours:
             from datetime import timedelta
             threshold = datetime.utcnow() - timedelta(hours=hours)
@@ -118,9 +121,14 @@ class NewsRepository:
         return db_email
 
     def update_email_sent_status(self, email_id: int):
-        """Marks an email as sent by updating sent_at."""
+        """Marks an email record as sent by updating sent_at."""
         db_email = self.db.query(EmailModel).filter(EmailModel.id == email_id).first()
         if db_email:
             db_email.sent_at = datetime.utcnow()
             self.db.commit()
         return db_email
+
+    def mark_digests_as_sent(self, digest_ids: list[int]):
+        """Marks a list of digests as sent."""
+        self.db.query(DigestModel).filter(DigestModel.id.in_(digest_ids)).update({"is_sent": True}, synchronize_session=False)
+        self.db.commit()

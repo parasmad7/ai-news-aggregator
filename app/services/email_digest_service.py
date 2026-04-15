@@ -10,9 +10,10 @@ from app.agent.email_agent import EmailAgent
 from app.services.email_service import EmailService
 from app.database.session import SessionLocal
 from app.database.repository import NewsRepository
+from app.utils import bootstrap_auth
 
-# Load environment variables
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# Bootstrap authentication and env vars
+bootstrap_auth()
 
 class EmailDigestService:
     def __init__(self, model_name=None):
@@ -25,12 +26,13 @@ class EmailDigestService:
         """Orchestrates the fetching, generation, and sending of the daily digest."""
         print("\n[Email Digest Service]")
         
-        # 1. Fetch top 10 digests from the last 24 hours
-        print("Fetching top 10 ranked digests from the last 24 hours...")
-        top_digests = self.repo.get_top_digests(limit=10, hours=24)
+        # 1. Fetch top 10 digests that haven't been sent yet
+        # Expanded window to 72 hours for safety.
+        print("Fetching top 10 unsent ranked digests from the last 72 hours...")
+        top_digests = self.repo.get_top_digests(limit=10, hours=72, unsent_only=True)
         
         if not top_digests:
-            print("  -> No recent ranked digests found. Email generation skipped.")
+            print("  -> No recent unsent digests found. Email generation skipped.")
             return
 
         print(f"  -> Found {len(top_digests)} items. Generating email content...")
@@ -50,7 +52,13 @@ class EmailDigestService:
             if self.email_service.send_email(email_data.subject, email_data.body, recipient):
                 # 5. Update the sent status in the DB
                 self.repo.update_email_sent_status(db_email.id)
+                
+                # 6. Mark included digests as sent to avoid duplicates in next run
+                digest_ids = [d.id for d in top_digests]
+                self.repo.mark_digests_as_sent(digest_ids)
+                
                 print(f"     [STRETCH] Email successfully sent to {recipient}")
+                print(f"     [STRETCH] Marked {len(digest_ids)} digests as sent.")
             else:
                 print(f"     [WARNING] Email was stored but not sent. Check SMTP configuration.")
         else:

@@ -11,9 +11,10 @@ sys.path.append(str(Path(__file__).resolve().parent.parent.parent))
 
 from app.database.session import SessionLocal
 from app.database.repository import NewsRepository
+from app.utils import bootstrap_auth, get_model_name
 
-# Load environment variables
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+# Bootstrap authentication and env vars
+bootstrap_auth()
 
 # Define schema for structured output
 class DigestSummary(BaseModel):
@@ -36,7 +37,7 @@ class SummarizerAgent:
             project=project_id,
             location=location
         )
-        self.model_name = model_name or os.getenv("VERTEX_MODEL", "gemini-2.5-flash")
+        self.model_name = model_name or get_model_name()
 
     def summarize(self, text: str, title: str) -> str:
         """Sends content to Gemini and returns a 2-3 line summary using structured output."""
