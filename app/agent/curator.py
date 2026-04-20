@@ -70,19 +70,22 @@ class CuratorAgent:
             return None
 
     def run(self):
-        """Processes all unranked digests in the database."""
+        """Processes all unranked digests in the database. Returns the number of items ranked."""
         print("\n[Curator Agent]")
         digests = self.repo.get_unranked_digests()
         print(f"Ranking {len(digests)} unranked digests...")
         
+        ranked_count = 0
         for d in digests:
             print(f"  -> Ranking: {d.title}")
             ranking = self.rank_digest(d.title, d.summary)
             if ranking:
                 self.repo.update_digest_relevance(d.id, ranking.score, ranking.reason)
+                ranked_count += 1
                 print(f"     [STRETCH] Score: {ranking.score}")
         
-        print("Curation complete.")
+        print(f"Curation complete. Ranked {ranked_count} items.")
+        return ranked_count
 
     def close(self):
         self.db.close()

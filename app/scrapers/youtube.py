@@ -80,23 +80,16 @@ class YouTubeScraper:
             print(f"  -> Transcript failed for {video_id}: {e}")
             return None
 
-    def get_latest_videos(self, channel_id: str, max_age_hours: int = 24) -> ChannelVideos:
+    def get_latest_videos(self, channel_id: str, max_age_hours: int = 24) -> List[Dict]:
+        """Fetches metadata for the latest videos. Transcripts are NOT fetched here for efficiency."""
         threshold = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
         raw_videos = self._fetch_rss(channel_id) or self._fetch_html(channel_id)
         
-        video_models = []
+        recent_videos = []
         for v in raw_videos:
             if v['published_at'] >= threshold:
-                print(f"Processing: {v['title']} ({v['video_id']})")
-                video_models.append(YouTubeVideo(
-                    title=v['title'],
-                    video_id=v['video_id'],
-                    url=f"https://www.youtube.com/watch?v={v['video_id']}",
-                    published_at=v['published_at'],
-                    author=v.get('author', 'Unknown'),
-                    transcript=self.get_transcript(v['video_id'])
-                ))
-        return ChannelVideos(channel_id=channel_id, videos=video_models)
+                recent_videos.append(v)
+        return recent_videos
 
 if __name__ == "__main__":
     cid = input("Enter YouTube Channel ID: ").strip()

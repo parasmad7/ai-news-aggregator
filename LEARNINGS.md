@@ -4,6 +4,27 @@ This document captures key technical decisions, architectural shifts, and daily 
 
 ---
 
+### 2026-04-18 / 2026-04-20
+
+**What We Did**
+- **Autonomous Refit:** Transitioned the project from a sequential pipeline to a fully **Agentic Tool-Use** architecture.
+- **Function Calling Migration:** Replaced the manually parsed "decision strings" in the `SupervisorAgent` with formal **Function Calling** (Tools). The agent now directly executes `scrape_news`, `summarize_pending_news`, etc.
+- **Web Search Integration:** Implemented a `search_the_web` tool using DuckDuckGo scraping, giving the agent real-time external context for vague or breaking news items.
+- **Content-Aware Observation:** Upgraded the `NewsRepository` to provide actual headlines to the Supervisor via `get_detailed_state()`, enabling content-aware decision making.
+- **Policy Enforcement:** Implemented the "24-hour email rule" with a built-in "Breaking News" (Relevance > 0.9) autonomous override.
+- **Metadata-First Scraping:** Optimized the `ScraperService` to fetch basic metadata before transcripts, reducing redundant network requests for already-processed items.
+
+**Key Learnings**
+- **Tools over Strings:** Formal function calling is significantly more robust than asking an LLM for a specific string. It allows the model to reason about parameters and chain multiple actions (e.g., Scrape -> Search -> Summarize) in a single autonomous turn.
+- **The "State Snapshot" Pattern:** Providing the agent with a detailed snapshot of the database (actual headlines, not just counts) at the start of its loop is the difference between a "blind" counter and an "aware" manager.
+- **Resilient Skipping:** By moving the "already exists" check to the metadata-collection phase, we significantly improved the pipeline's performance and reliability against IP-based blocks.
+
+**Insights**
+- **Managerial Autonomy:** An agent that can override its own rules (like the 24h email policy for breaking news) feels much more "agentic" and useful than a strict script. The key is providing a clear, quantifiable ground truth (like a Relevance Score > 0.9) to anchor that autonomy.
+- **The Loop Budget:** `max_turns` is an essential safety rail. It prevents the agent from getting stuck in "infinite reasoning" or redundant scraping loops by giving it a fixed action budget per session.
+
+---
+
 ### 2026-04-13
 
 **What We Did**
@@ -76,6 +97,9 @@ Always define Pydantic models for LLM outputs. Never rely on the LLM to format r
 
 ### 3. Identity-Based Infrastructure
 Favor **Application Default Credentials (ADC)** over static secrets like API keys. This is more secure and makes it easier to transition from local development to production on Google Cloud (Cloud Run, GKE, etc.).
+
+### 4. Tool-Use over Response Parsing
+Whenever possible, use formal **Function Calling** rather than asking the LLM to output a specific string or JSON structure to trigger actions. This makes the agent's logic "native" to the code and allows for more complex, parameter-driven interactions.
 
 ---
 

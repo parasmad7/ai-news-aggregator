@@ -69,8 +69,9 @@ class SummarizerAgent:
             return None
 
     def run(self):
-        """Processes all videos and posts in the database."""
+        """Processes all videos and posts in the database. Returns the number of items summarized."""
         print("\n[Summarizer Agent]")
+        summarized_count = 0
         
         # Process Videos
         videos = self.repo.get_all_videos()
@@ -90,6 +91,7 @@ class SummarizerAgent:
                     source_type="video",
                     published_at=video.published_at
                 )
+                summarized_count += 1
                 print(f"     [STRETCH] Summary saved")
         
         # Process Posts
@@ -110,9 +112,11 @@ class SummarizerAgent:
                     source_type="post",
                     published_at=post.published_at
                 )
+                summarized_count += 1
                 print(f"     [STRETCH] Summary saved")
         
-        print("Summarization complete.")
+        print(f"Summarization complete. Summarized {summarized_count} items.")
+        return summarized_count
 
     def close(self):
         self.db.close()

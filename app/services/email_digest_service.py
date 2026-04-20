@@ -23,17 +23,16 @@ class EmailDigestService:
         self.email_service = EmailService()
 
     def run(self):
-        """Orchestrates the fetching, generation, and sending of the daily digest."""
+        """Orchestrates the fetching, generation, and sending of the daily digest. Returns a status string."""
         print("\n[Email Digest Service]")
         
         # 1. Fetch top 10 digests that haven't been sent yet
-        # Expanded window to 72 hours for safety.
         print("Fetching top 10 unsent ranked digests from the last 72 hours...")
         top_digests = self.repo.get_top_digests(limit=10, hours=72, unsent_only=True)
         
         if not top_digests:
             print("  -> No recent unsent digests found. Email generation skipped.")
-            return
+            return "No unsent news items found. Email skipped."
 
         print(f"  -> Found {len(top_digests)} items. Generating email content...")
         
@@ -57,12 +56,15 @@ class EmailDigestService:
                 digest_ids = [d.id for d in top_digests]
                 self.repo.mark_digests_as_sent(digest_ids)
                 
-                print(f"     [STRETCH] Email successfully sent to {recipient}")
-                print(f"     [STRETCH] Marked {len(digest_ids)} digests as sent.")
+                status = f"Successfully sent email to {recipient} with {len(digest_ids)} news items."
+                print(f"     [STRETCH] {status}")
+                return status
             else:
-                print(f"     [WARNING] Email was stored but not sent. Check SMTP configuration.")
+                msg = "Email was stored but failed to send. Check SMTP logs."
+                print(f"     [WARNING] {msg}")
+                return msg
         else:
-            print("  -> Failed to generate email content.")
+            return "Failed to generate email content."
 
     def close(self):
         """Closes the database connections."""

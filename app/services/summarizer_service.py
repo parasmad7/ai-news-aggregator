@@ -11,9 +11,10 @@ class SummarizerService:
         self.agent = SummarizerAgent(model_name=model_name) if model_name else SummarizerAgent()
 
     def run(self):
-        """Runs the summarization agent."""
+        """Runs the summarization agent and returns a status string."""
         print("\n[Summarizer Service]")
-        self.agent.run()
+        count = self.agent.run()
+        return f"Summarized {count} new items."
 
     def close(self):
         self.agent.close()

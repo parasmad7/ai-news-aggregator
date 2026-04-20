@@ -1,43 +1,16 @@
-from app.services import (
-    ScraperService,
-    SummarizerService,
-    CuratorService,
-    EmailDigestService
-)
+from app.agent.supervisor import SupervisorAgent
 from app.config import MAX_AGE_HOURS
 
 def run_all():
-    print(f"\n--- Unified AI News Aggregator (Last {MAX_AGE_HOURS} hours) ---")
+    print(f"\n--- AI News Aggregator: Agentic Mode (Window: {MAX_AGE_HOURS}h) ---")
     
-    # 1. Scraper Service (YouTube, OpenAI, Anthropic)
-    scraper_service = ScraperService()
+    supervisor = SupervisorAgent()
     try:
-        scraper_service.run_all()
+        supervisor.run()
     finally:
-        scraper_service.close()
+        supervisor.close()
 
-    # 2. Summarizer Service
-    summarizer_service = SummarizerService()
-    try:
-        summarizer_service.run()
-    finally:
-        summarizer_service.close()
-
-    # 3. Curator Service
-    curator_service = CuratorService()
-    try:
-        curator_service.run()
-    finally:
-        curator_service.close()
-
-    # 4. Email Digest Service
-    email_service = EmailDigestService()
-    try:
-        email_service.run()
-    finally:
-        email_service.close()
-
-    print("\n--- Aggregation Complete ---")
+    print("\n--- Process Complete ---")
 
 if __name__ == "__main__":
     run_all()

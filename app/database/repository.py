@@ -11,8 +11,9 @@ class NewsRepository:
         self.db = db
 
     def add_video(self, video: YouTubeVideo):
-        """Adds a YouTube video to the database if it doesn't already exist."""
+        """Adds a YouTube video to the database if it doesn't already exist. Returns (video, created)."""
         db_video = self.db.query(VideoModel).filter(VideoModel.video_id == video.video_id).first()
+        created = False
         
         if not db_video:
             db_video = VideoModel(
@@ -25,12 +26,14 @@ class NewsRepository:
             )
             self.db.add(db_video)
             self.db.commit()
+            created = True
         
-        return db_video
+        return db_video, created
 
     def add_post(self, post: OpenAIPost | AnthropicPost, source: str):
-        """Adds a blog post to the database if it doesn't already exist."""
+        """Adds a blog post to the database if it doesn't already exist. Returns (post, created)."""
         db_post = self.db.query(PostModel).filter(PostModel.url == str(post.url)).first()
+        created = False
         
         if not db_post:
             db_post = PostModel(
@@ -44,8 +47,9 @@ class NewsRepository:
             )
             self.db.add(db_post)
             self.db.commit()
+            created = True
         
-        return db_post
+        return db_post, created
 
     def truncate_posts(self):
         """Clears all entries from the posts table."""
@@ -132,3 +136,45 @@ class NewsRepository:
         """Marks a list of digests as sent."""
         self.db.query(DigestModel).filter(DigestModel.id.in_(digest_ids)).update({"is_sent": True}, synchronize_session=False)
         self.db.commit()
+
+    def get_detailed_state(self):
+        """Returns a snapshot of the current state of the news pipeline including headlines."""
+        from datetime import timedelta
+        threshold_72h = datetime.utcnow() - timedelta(hours=72)
+        
+        # 1. Pending Summaries (Titles)
+        digested_urls_stmt = select(DigestModel.source_url)
+        pending_videos = self.db.query(VideoModel).filter(~VideoModel.url.in_(digested_urls_stmt)).limit(10).all()
+        pending_posts = self.db.query(PostModel).filter(~PostModel.url.in_(digested_urls_stmt)).limit(10).all()
+        
+        pending_summary_titles = [v.title for v in pending_videos] + [p.title for p in pending_posts]
+        
+        # 2. Pending Curation (Titles)
+        unranked_digests = self.db.query(DigestModel).filter(DigestModel.relevance_score == None).limit(10).all()
+        pending_curation_titles = [d.title for d in unranked_digests]
+        
+        # 3. Ready for Email (Titles + Scores)
+        ready_digests = self.db.query(DigestModel).filter(
+            DigestModel.relevance_score >= 0.7, 
+            DigestModel.is_sent == False,
+            DigestModel.published_at >= threshold_72h
+        ).order_by(DigestModel.relevance_score.desc()).limit(10).all()
+        ready_email_titles = [f"{d.title} (Score: {d.relevance_score})" for d in ready_digests]
+        
+        # 4. Last email sent time
+        last_email = self.db.query(EmailModel).filter(EmailModel.sent_at != None).order_by(EmailModel.sent_at.desc()).first()
+        last_email_time = last_email.sent_at if last_email else None
+        
+        return {
+            "pending_summaries_count": len(pending_summary_titles),
+            "pending_summaries": pending_summary_titles[:10],
+            "pending_curation_count": self.db.query(DigestModel).filter(DigestModel.relevance_score == None).count(),
+            "pending_curation": pending_curation_titles,
+            "ready_email_count": self.db.query(DigestModel).filter(
+                DigestModel.relevance_score >= 0.7, 
+                DigestModel.is_sent == False,
+                DigestModel.published_at >= threshold_72h
+            ).count(),
+            "ready_email_items": ready_email_titles,
+            "last_email_at": last_email_time
+        }
