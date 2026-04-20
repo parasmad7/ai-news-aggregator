@@ -20,6 +20,10 @@ This document captures key technical decisions, architectural shifts, and daily 
 - **Resilient Skipping:** By moving the "already exists" check to the metadata-collection phase, we significantly improved the pipeline's performance and reliability against IP-based blocks.
 
 **Insights**
+- **Tools vs. Strings (The Remote Control Pattern):** String-based decisions are like a manager shouting "Coffee!" across a room; Function Calling is like giving the manager a remote control with a "Make Coffee" button wired directly to the machine.
+    - **Protocol vs. Guesswork**: Tools provide a formal Python signature, making the interaction native to the code and immune to LLM "creativity" in output formatting.
+    - **Native Parameters**: Tools allow the model to provide clean variables (like search queries) without needing complex regex or string parsing in the backend.
+    - **Multi-Step Reasoning**: Tools allow the model to chain multiple actions (Search -> Act -> Summarize) in one turn by viewing tool results as 'FunctionResponses' in real-time.
 - **Managerial Autonomy:** An agent that can override its own rules (like the 24h email policy for breaking news) feels much more "agentic" and useful than a strict script. The key is providing a clear, quantifiable ground truth (like a Relevance Score > 0.9) to anchor that autonomy.
 - **The Loop Budget:** `max_turns` is an essential safety rail. It prevents the agent from getting stuck in "infinite reasoning" or redundant scraping loops by giving it a fixed action budget per session.
 
