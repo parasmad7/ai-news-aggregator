@@ -4,6 +4,18 @@ This document captures key technical decisions, architectural shifts, and daily 
 
 ---
 
+### 2026-04-25
+
+**What We Did**
+- **Architecture Retrospective:** Documented the exact transition from the legacy "hard-coded pipeline" (`runner.py` on the `main` branch) to the new Agentic `SupervisorAgent`.
+- **Tool Schema Exploration:** Detailed how the Google GenAI SDK uses Python reflection to parse function names, docstrings, and type hints into OpenAPI-compliant JSON schemas for the LLM.
+
+**Key Learnings**
+- **From Scripts to Cognitive Loops:** The primary value of the agentic shift was moving from a rigid, blind execution script (which ran all services sequentially regardless of need) to a dynamic cognitive loop that observes the database state before taking action.
+- **Docstrings as API Definitions:** In an agentic architecture, a function's docstring and type hints are not just for human developers; they act as the literal API documentation for the LLM. The SDK parses them into a JSON schema, which the LLM relies on entirely to understand when and how to trigger a tool.
+
+---
+
 ### 2026-04-18 / 2026-04-20
 
 **What We Did**
@@ -26,6 +38,34 @@ This document captures key technical decisions, architectural shifts, and daily 
     - **Multi-Step Reasoning**: Tools allow the model to chain multiple actions (Search -> Act -> Summarize) in one turn by viewing tool results as 'FunctionResponses' in real-time.
 - **Managerial Autonomy:** An agent that can override its own rules (like the 24h email policy for breaking news) feels much more "agentic" and useful than a strict script. The key is providing a clear, quantifiable ground truth (like a Relevance Score > 0.9) to anchor that autonomy.
 - **The Loop Budget:** `max_turns` is an essential safety rail. It prevents the agent from getting stuck in "infinite reasoning" or redundant scraping loops by giving it a fixed action budget per session.
+
+#### 💡 Deep Dive: Function Calling (Tools) vs. String-Based Decisions
+
+The shift to formal **Function Calling** represents the jump from a "Chatbot" that talks about tasks to an **Agent** that actually operates the code.
+
+1.  **The "Protocol" vs. "Guesswork"**
+    *   **String-Based (Old)**: You tell the LLM, "Output 'SCRAPE' if you want to find news." The code then uses a standard `if action == "SCRAPE":` block.
+    *   **The Risk**: If the model gets creative and outputs "I think we should Scrape now" or "SCRAPPING", the code crashes because it doesn't match the exact string.
+    *   **Function Calling (Tools)**: We provide the model with a Python signature (name, docstring, and arguments).
+    *   **The Benefit**: The model isn't "talking" anymore; it is generating a structured instruction that maps 1:1 to the code. It's essentially a protocol.
+
+2.  **Parameter Native Support**
+    *   **Strings**: If you want the agent to search for a specific topic, you have to write complex prompts: *"If you want to search, output 'SEARCH: <query>'."* Then you have to write regex/parsing code to find that query.
+    *   **Tools**: You just provide `search_the_web(query: str)`. When Gemini decides to search, it provides the `query` variable as a clean Python dictionary. No parsing required.
+
+3.  **The "Thought-Action-Result" Loop**
+    *   **In Action**:
+        - **Agent**: "I see a headline about 'Sora', but I don't know if it's new. I'll call `search_the_web(query='Sora release date')`."
+        - **Code**: Runs the search, gets results, and sends them back to the Agent.
+        - **Agent**: "Aha! The search results say it was released today. I'll now call `send_email_digest()` because this is Breaking News."
+    *   **The Difference**: With strings, the Agent would have to "Finish" its turn after the search, and you'd have to manually start a new session to tell it what the search found. With Tools, the agent can "reason" and "act" multiple times in a single turn.
+
+4.  **Self-Correction**
+    *   Gemini knows it has these tools in its "peripheral vision." If a tool fails (e.g., search tool returns an error), the Agent sees that error message as a `FunctionResponse`. It can then decide: *"The search failed, I'll try a different query"* or *"I'll skip the search and just summarize what I have."*
+
+**Summary Analogy:**
+- **String-Based**: Like a manager shouting "Coffee!" across the room and hoping someone hears and knows where the kitchen is.
+- **Function Calling**: Like giving the manager a **remote control** with a "Make Coffee" button that is wired directly to the machine.
 
 ---
 
